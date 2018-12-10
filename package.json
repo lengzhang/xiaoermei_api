@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node src",
-    "pm2": "pm2 start src --name \"React-Dianping-API\" --max-memory-restart 400M"
+    "pm2": "pm2 start src --name \"XiaoErMei-API\" --max-memory-restart 400M"
   },
   "author": "",
   "license": "ISC",
