@@ -38,15 +38,17 @@ exports.Schema = `
 
 exports.Query = `
   getSelfInfo: _user
-  getUser(_id: String!): _user
+  getUser(_id: ID!): _user
   getUsers(role: String, gender: Int, country: String, province: String, city: String): [_user]!
 `
 
 exports.Mutation = `
-  updateUserInfo(nickname: String, avatar: String, gender: Int, brief: String, country: String, province: String, city: String): Boolean!
+  addLandlord(nickname: String!, gender: Int): _result!
 
-  linkEmail(email: String!): Boolean!
-  unlinkEmail: Boolean!
-  linkPhone(country_code: String!, phone: String!): Boolean!
-  unlinkPhone: Boolean!
+  updateUserInfo(_id: ID, nickname: String, avatar: String, gender: Int, brief: String, country: String, province: String, city: String): _result!
+
+  linkEmail(_id: ID, email: String!): _result!
+  unlinkEmail(_id: ID): _result!
+  linkPhone(_id: ID, country_code: String!, phone: String!): _result!
+  unlinkPhone(_id: ID): _result!
 `

@@ -3,19 +3,19 @@ exports.Schema = `
     _id: ID
     open_id: String
     user: _user
-    skey: String
+    last_login_at: String
     create_at: String
   }
 
   type weappLoginResult {
-    skey: String
+    access_token: String
     success: Boolean!
   }
 `
 
 exports.Query = `
-  getWeappUser(_id: String, open_id: String, skey: String): _weapp_user
-  getWeappUsers(_id: String, open_id: String, skey: String): [_weapp_user]!
+  getWeappUser(_id: String, open_id: String): _weapp_user
+  getWeappUsers(_id: String, open_id: String): [_weapp_user]!
 `
 
 exports.Mutation = `

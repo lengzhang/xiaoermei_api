@@ -7,7 +7,8 @@ let WeappUserSchema = new Schema({
   // User Info
   user: {type: ObjectId, ref: 'User', unique: true, required: true},
   // Token for weapp
-  skey: {type: String, required: true},
+  // skey: {type: String, required: true},
+  last_login_at: {type: Date, default: Date.now()},
   create_at: {type: Date, default: Date.now()},
 });
 

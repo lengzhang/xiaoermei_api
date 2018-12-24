@@ -7,6 +7,8 @@ exports.Schema = `
     rental_type: String
     guest_only: Boolean
     price: Float
+    deposit_rate: Int
+    discount_rate: Int
     address: _house_address
     bedrooms: [_house_bedrooms]
     bedrooms_count: Int
@@ -15,6 +17,8 @@ exports.Schema = `
     rule: _house_rule
     acknowledge: _house_acknowledge
     brief: String
+    cover: _photo
+    photos: [_photo]
     comment: [String]
     comment_count: Int
     view_count: Int
@@ -36,26 +40,6 @@ exports.Schema = `
     zip_code: String
     latitude: Float
     longitude: Float
-  }
-
-  type _house_bedrooms {
-    _id: ID
-    house: ID
-    king: Int
-    queen: Int
-    double: Int
-    single: Int
-    sofa_bed: Int
-    couch: Int
-    air_mattress: Int
-    bunk_bed: Int
-    floor_mattress: Int
-    roddler_bed: Int
-    crib: Int
-    water_bed: Int
-    hammock: Int
-    total: Int
-    create_at: String
   }
 
   type _house_amenities {
@@ -127,25 +111,21 @@ exports.Query = `
 `
 
 exports.Mutation = `
-  addHouse(owner: ID, title: String!, type: String!, rental_type: String!, guest_only: Boolean!, price: Float!): Boolean!
-  addBedroom(owner: ID, house: ID!, king: Int, queen: Int, double: Int, single: Int, sofa_bed: Int, couch: Int, air_mattress: Int, bunk_bed: Int, floor_mattress: Int, roddler_bed: Int, crib: Int, water_bed: Int, hammock: Int): Boolean!
+  addHouse(owner: ID, title: String!, type: String!, rental_type: String!, guest_only: Boolean!, price: Float!, deposit_rate: Int, discount_rate: Int): _result!
 
-  updateBedroom(_id: ID!, king: Int, queen: Int, double: Int, single: Int, sofa_bed: Int, couch: Int, air_mattress: Int, bunk_bed: Int, floor_mattress: Int, roddler_bed: Int, crib: Int, water_bed: Int, hammock: Int): Boolean!
+  deleteHouse(ids: [ID]!): [_result!]!
 
-  deleteHouse(_id: [ID]!): [_result!]!
-  removeHouse(_id: [ID]!): [_result!]!
+  removeHouses(ids: [ID]!): [_result!]!
 
-  removeBedroom(_id: [ID]!): [_result!]!
+  updateHouse(_id: ID!, title: String, type: String, rental_type: String, guest_only: Boolean, price: Float, deposit_rate: Int, discount_rate: Int, brief: String, publish: Boolean, verify: String, recommend: String): _result!
 
-  updateHouse(_id: ID!, title: String, type: String, rental_type: String, guest_only: Boolean, price: Float, brief: String): Boolean!
+  updateHouseAddress(_id: ID!, street: String, apt: String, city: String, state: String, zip_code: String, latitude: Float, longitude: Float): _result!
 
-  updateHouseAddress(_id: ID!, street: String, apt: String, city: String, state: String, zip_code: String, latitude: Float, longitude: Float): Boolean!
+  updateHouseAmenities(_id: ID!, esentials: Boolean, wifi: Boolean, shampoo: Boolean, tv: Boolean, hot_water: Boolean, heating: Boolean, air_condition: Boolean, hair_dryer: Boolean, breakfast: Boolean, workspace: Boolean, indoor_fireplace: Boolean, pool: Boolean, kitchen: Boolean, washer: Boolean, dryer: Boolean, parking: Boolean, elevator: Boolean, hot_tub: Boolean, gym: Boolean): _result!
 
-  updateHouseAmenities(_id: ID!, esentials: Boolean, wifi: Boolean, shampoo: Boolean, tv: Boolean, hot_water: Boolean, heating: Boolean, air_condition: Boolean, hair_dryer: Boolean, breakfast: Boolean, workspace: Boolean, indoor_fireplace: Boolean, pool: Boolean, kitchen: Boolean, washer: Boolean, dryer: Boolean, parking: Boolean, elevator: Boolean, hot_tub: Boolean, gym: Boolean): Boolean!
+  updateHouseSafeFacilities(_id: ID!, smoke_detector: Boolean, carbon_monoxide_detector: Boolean, first_aid_kit: Boolean, fire_extinguisher: Boolean, private_entrance: Boolean, lock_on_bedroom_door: Boolean, private_living_room: Boolean): _result!
 
-  updateHouseSafeFacilities(_id: ID!, smoke_detector: Boolean, carbon_monoxide_detector: Boolean, first_aid_kit: Boolean, fire_extinguisher: Boolean, private_entrance: Boolean, lock_on_bedroom_door: Boolean, private_living_room: Boolean): Boolean!
+  updateHouseRule(_id: ID!, children: Boolean, infants: Boolean, pets: Boolean, smoking: Boolean, parties: Boolean, addition: String): _result!
 
-  updateHouseRule(_id: ID!, children: Boolean, infants: Boolean, pets: Boolean, smoking: Boolean, parties: Boolean, addition: String): Boolean!
-
-  updateHouseAcknowledge(_id: ID!, climb_stairs: Boolean, climb_stairs_brief: String, potential_noise: Boolean, potential_noise_brief: String, pets: Boolean, pets_brief: String, no_parking: Boolean, no_parking_brief: String, spaces_shared: Boolean, spaces_shared_brief: String, amenity_limit: Boolean, amenity_limit_brief: String, recording: Boolean, recording_brief: String, weapons: Boolean, weapons_brief: String, dangerous: Boolean, dangerous_brief: String): Boolean!
+  updateHouseAcknowledge(_id: ID!, climb_stairs: Boolean, climb_stairs_brief: String, potential_noise: Boolean, potential_noise_brief: String, pets: Boolean, pets_brief: String, no_parking: Boolean, no_parking_brief: String, spaces_shared: Boolean, spaces_shared_brief: String, amenity_limit: Boolean, amenity_limit_brief: String, recording: Boolean, recording_brief: String, weapons: Boolean, weapons_brief: String, dangerous: Boolean, dangerous_brief: String): _result!
 `

@@ -1,4 +1,5 @@
 import {User, Email, Phone, House} from '../../mongo/models'
+import { verifyUser, verifyOwner, verifyHouse} from '../../global/verify';
 let [ query, mutation, resolvers ] =[{}, {}, {}];
 import {createError} from '../errors';
 
@@ -54,27 +55,51 @@ query.getSelfInfo = async (root, args, context, info) => {
 }
 
 // Mutation
+mutation.addLandlord = async (root, args, context, info) => {
+  // Verify User
+  let user = await verifyUser({userId: context.user, admin: true});
+  return await User.save({data: Object.assign(args, {role: "landlord"})})
+  .then((doc) => {return {success: true}});
+}
+
+/**
+ *  Verify User and return the target user id
+ *  @param  {String}  user
+ *  @param  {String}  targetUser
+ *  @return {String}  id of the target user
+ */
+const verifyUpdateUser = async (user, targetUser) => {
+  // Verify User
+  let userInfo = await verifyUser({userId: user, admin: true, customer: true});
+  // customer doing the action
+  if (userInfo.role === "customer") return userInfo._id;
+  // admin doing the action and did not provide the target _id
+  else if (!targetUser) throw createError({message: "target id is required"});
+  // admin doing the action, verify the target _id
+  userInfo = await verifyUser({userId: targetUser, customer: true, landlord: true, admin: true});
+  return userInfo._id
+}
+
 mutation.updateUserInfo = async (root, args, context, info) => {
-  let { user } = context;
-  if (!user) throw createError({message: 'Access token is required'});
+  // Verify User
+  let user = await verifyUpdateUser(context.user, args._id);
   // Minimise args
-  let userInfo = await User.findOne({query: {_id: user}});
+  let userInfo = await User.findOne({query: {_id: user._id}});
   for (let v in args) {
     if (args[`${v}`] === userInfo[`${v}`]) delete args[`${v}`];
   }
   if (args.nickname) args = await Object.assign({}, args, {nickname_reset_at: Date.now()})
   // Update user infomation
-  return await User.updateOne({query: {_id: user}, update: args, options: {runValidators: true}})
-  .then(async (res) => true)
-  .catch((err) => {throw err})
+  return await User.updateOne({query: {_id: user._id}, update: args, options: {runValidators: true}})
+  .then((res) => {return {success: true}});
 };
 
 mutation.linkEmail = async (root, args, context, info) => {
-  let { user } = context;
-  if (!user) throw createError({message: 'Access token is required'});
+  // Verify User
+  let user = await verifyUpdateUser(context.user, args._id);
   let { email } = args;
   if (!email) throw createError({message: 'Email is required'});
-  let userInfo = await User.findOne({query: {_id: user}});
+  let userInfo = await User.findOne({query: {_id: user}, select: {'_id': 1, 'email': 1}});
   // Check user already linked an email
   if (userInfo.email) throw createError({message: 'User already linked an email.'});
   // Check the email already be linked
@@ -84,13 +109,13 @@ mutation.linkEmail = async (root, args, context, info) => {
   .then(async (doc) => {
     userInfo.email = doc._id;
     await userInfo.save()
-    return true;
+    return {success: true};
   })
 };
 
 mutation.unlinkEmail = async (root, args, context, info) => {
-  let { user } = context;
-  if (!user) throw createError({message: 'Access token is required'});
+  // Verify User
+  let user = await verifyUpdateUser(context.user, args._id);
   let userInfo = await User.findOne({query: {_id: user}});
   // Check user already linked an email
   if (userInfo && !userInfo.email) throw createError({message: 'Account did not link an email address'});
@@ -99,13 +124,13 @@ mutation.unlinkEmail = async (root, args, context, info) => {
   .then(async (res) => {
     userInfo.email = null;
     await userInfo.save()
-    return true;
+    return {success: true};
   })
 };
 
 mutation.linkPhone = async (root, args, context, info) => {
-  let { user } = context;
-  if (!user) throw createError({message: 'Access token is required'});
+  // Verify User
+  let user = await verifyUpdateUser(context.user, args._id);
   let { country_code, phone } = args;
   if (!country_code || !phone) throw createError({message: 'Country code and phone number are required'});
   let userInfo = await User.findOne({query: {_id: user}});
@@ -118,13 +143,13 @@ mutation.linkPhone = async (root, args, context, info) => {
   .then(async (doc) => {
     userInfo.phone = doc._id;
     await userInfo.save()
-    return true;
+    return {success: true};
   })
 };
 
 mutation.unlinkPhone = async (root, args, context, info) => {
-  let { user } = context;
-  if (!user) throw createError({message: 'Access token is required'});
+  // Verify User
+  let user = await verifyUpdateUser(context.user, args._id);
   let userInfo = await User.findOne({query: {_id: user}});
   // Check user already linked a phone number
   if (userInfo && !userInfo.phone) throw createError({message: 'Account did not link a phone number'});
@@ -133,7 +158,7 @@ mutation.unlinkPhone = async (root, args, context, info) => {
   .then(async (res) => {
     userInfo.phone = null;
     await userInfo.save()
-    return true;
+    return {success: true};
   })
 };
 

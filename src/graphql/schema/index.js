@@ -1,14 +1,28 @@
 import { gql } from 'apollo-server-express';
 
-import TestOne from './test-one';
-import TestTwo from './test-two';
-import Test from './test';
+import Admin from './admin';
 
 import User from './user';
 import WeappUser from './weapp-user';
 import Account from './account';
+import Order from './order';
 
 import House from './house';
+import Bedroom from './bedroom';
+import Photo from './photo';
+import Comment from './comment';
+
+const items = [Admin, User, WeappUser, Account, Order, House, Bedroom, Photo, Comment];
+
+let Schemas = "", Queries = "", Mutations = "";
+
+// console.log("items", items);
+
+items.map(async (item) => {
+  if (item.Schema) Schemas = `${Schemas}${item.Schema}`;
+  if (item.Query) Queries = `${Queries}${item.Query}`;
+  if (item.Mutation) Mutations = `${Mutations}${item.Mutation}`;
+})
 
 const typeDefs = gql`
 
@@ -17,39 +31,11 @@ const typeDefs = gql`
     message: String
   }
 
-  ${Test.Schema}
-  ${TestOne.Schema}
-  ${TestTwo.Schema}
+  ${Schemas}
 
-  ${User.Schema}
-  ${WeappUser.Schema}
-  ${Account.Schema}
+  type Query {${Queries}}
 
-  ${House.Schema}
-
-  type Query {
-    ${Test.Query}
-    ${TestOne.Query}
-    ${TestTwo.Query}
-
-    ${User.Query}
-    ${WeappUser.Query}
-    ${Account.Query}
-
-    ${House.Query}
-  }
-
-  type Mutation {
-    ${Test.Mutation}
-    ${TestOne.Mutation}
-    ${TestTwo.Mutation}
-
-    ${User.Mutation}
-    ${WeappUser.Mutation}
-    ${Account.Mutation}
-
-    ${House.Mutation}
-  }
+  type Mutation {${Mutations}}
 `;
 
 export default typeDefs

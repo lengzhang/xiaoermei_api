@@ -25,11 +25,8 @@ let UserSchema = new Schema({
   country: {type: String, default: ''},
   province: {type: String, default: ''},
   city: {type: String, default: ''},
-  house_count: {type: Number, default: 0},
-  comment_count: {type: Number, default: 0},
   // following house
   follow_house: [{type: ObjectId, ref: 'House'}],
-  follow_house_count: {type: Number, default: 0},
   // Email
   email: {type: ObjectId, ref: 'Email', default: null},
   // Phone Number

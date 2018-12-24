@@ -24,9 +24,4 @@ let BedroomSchema = new Schema({
   create_at: {type: Date, default: Date.now()},
 });
 
-BedroomSchema.post(/^update/, true, function(res, next) {
-  console.log("post update", this._conditions);
-  next();
-})
-
 mongoose.model('Bedroom', BedroomSchema);

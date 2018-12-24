@@ -13,6 +13,10 @@ resolvers._account = {
   create_at: ({create_at}) => create_at,
 }
 
+resolvers.token = {
+  access_token: ({access_token}) => access_token,
+}
+
 // Query
 query.getAccount = async (root, {_id}, context, info) => {
   return await Account.findOne({query: {_id}});
@@ -36,7 +40,10 @@ query.signIn = async (root, args, context, info) => {
       select: 'password user',
       populate: {
         path: 'user',
-        select: '_id'
+        select: {
+          _id: 1,
+          role: 1,
+        }
       }
     }
   })
@@ -54,7 +61,7 @@ query.signIn = async (root, args, context, info) => {
     ip: context.ip,
     expires: jwt_expires,
   });
-  return access_token
+  return {access_token, role: accountInfo.user.role}
 }
 
 // Mutation
@@ -62,6 +69,7 @@ mutation.signUp = async (root, args, context, info) => {
   // for (let v in args) {
   //   console.log(`[${v}]\t`, args[`${v}`]);
   // }
+  if (args.role === 'landlord') return {success: false, message: "Cannot sigup for landlord"};
   if (await Account.findOne({query: {username: args.username}})) {
     throw createError({message: 'Username Exist'});
   }
@@ -85,7 +93,7 @@ mutation.signUp = async (root, args, context, info) => {
     // console.log("accountInfo", accountInfo);
     return await Account.save({data: accountInfo})
     .then((res) => {
-      return true;
+      return {success: true};
     })
     .catch(async (err) => {
       await User.deleteOne({query: {_id: res._id}})
@@ -115,8 +123,8 @@ mutation.updatePassword = async (root, args, context, info) => {
   .catch((err) => {throw err});
 
   // Update Password
-  return await Account.updateOne({query: {user: context.user}, update: {password: hash}})
-  .then((res) => {return true;})
+  return await Account.updateOne({query: {user: context.user}, update: {password: hash}, options: {runValidators: true}})
+  .then((res) => {return {success: true};})
   .catch((err) => {throw err});
 }
 

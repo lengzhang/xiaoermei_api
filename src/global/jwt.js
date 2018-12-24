@@ -11,7 +11,7 @@ exports.encode = async ({secretKey, userId, ip, expires = 60, options = {}}) => 
   }, secretKey);
 
   // Clean token record
-  await Token.deleteMany({query: {user: userId, ip}})
+  await Token.deleteMany({query: {user: userId}})
   .catch((err) => {throw err});
   // Save token record
   await Token.save({data: {user: userId, token, ip, expires}})

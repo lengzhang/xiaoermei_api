@@ -8,7 +8,6 @@ let HouseSchema = new Schema({
   // Title
   title: {
     type: String,
-    unique: true,
     minlength: [3, 'title too short'],
     maxlength: [50, 'title too long'],
     trim: true,
@@ -37,9 +36,21 @@ let HouseSchema = new Schema({
   // Price in USD
   price: {
     type: Number,
-    required: [true, 'price is required'],
     min: [1, 'price must larger than 0'],
     required: [true, 'price is required'],
+  },
+  // Rate of deposit in %, default 0%
+  deposit_rate: {
+    type: Number,
+    min: [0, 'deposit rate must larger than 0'],
+    default: 0,
+  },
+  // Rate of discount in %, default 0%
+  discount_rate: {
+    type: Number,
+    min: [0, 'discount rate must larger than 0'],
+    max: [100, 'discount rate must less than 100'],
+    default: 0,
   },
   // Address
   address: {
@@ -192,12 +203,13 @@ let HouseSchema = new Schema({
   },
   brief: {type: String, default: ''},
   // Photos
-  photos: [{type: String, required: true}],
+  cover: {type: ObjectId, ref: 'Photo'},
+  photos: [{type: ObjectId, ref: 'Photo'}],
   // List of comment id
   // comment: [{ type: ObjectId, ref: 'Comment' }],
-  comment: [{ type: ObjectId }],
+  // comment: [{ type: ObjectId }],
   // Comment Counter
-  comment_count: { type: Number, default: 0 },
+  // comment_count: { type: Number, default: 0 },
   // View Counter
   view_count: { type: Number, default: 0 },
   // Following Counter
@@ -216,9 +228,9 @@ let HouseSchema = new Schema({
   last_update_at: {type: Date, default: Date.now()},
 });
 
-HouseSchema.post(/^update/, true, function(res, next) {
-  console.log("post update", this._conditions);
-  next();
-})
+// HouseSchema.post(/^update/, true, function(res, next) {
+//   console.log("post update", this._conditions);
+//   next();
+// })
 
 mongoose.model('House', HouseSchema);

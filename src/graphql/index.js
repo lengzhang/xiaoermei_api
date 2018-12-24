@@ -23,6 +23,9 @@ const server = new ApolloServer({
   },
 });
 
+// Initialing Admin if Admin is empty
+import './init';
+
 /**
  * Start graphql
  * @param  {Object} app - express' app
@@ -31,6 +34,7 @@ module.exports = (app) => {
   app.use(async(req, res, next)=>{
     // console.log(req.headers);
     let token = req.headers.access_token || null;
+    if (!token && req.body.variables) token = req.body.variables.access_token || null;
     // Check request contain access token or not
     if (!token) return next();
     // Get user information by token

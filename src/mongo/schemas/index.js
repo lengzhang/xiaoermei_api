@@ -4,6 +4,7 @@ let mongoose = require('mongoose');
 // connect to server
 mongoose.connect(config.db_url, { useNewUrlParser: true });
 mongoose.set('useCreateIndex', true);
+mongoose.set('useFindAndModify', false);
 
 // https://github.com/Automattic/mongoose/issues/6890
 // (node:6652) DeprecationWarning: current URL string parser is deprecated, and will be removed in a future version. To use the new parser, pass option { useNewUrlParser: true } to MongoClient.connect.
@@ -25,9 +26,7 @@ db.on('disconnected', () => {
 })
 
 // Schema
-// require('./user');
-require('./test-one');
-require('./test-two');
+require('./admin');
 
 require('./user');
 require('./weapp-user')
@@ -35,12 +34,14 @@ require('./account');
 require('./token');
 require('./email');
 require('./phone');
+require('./order');
 
 require('./house');
 require('./bedroom');
+require('./photo');
+require('./comment');
 
-exports.TestOne = mongoose.model('TestOne');
-exports.TestTwo = mongoose.model('TestTwo');
+exports.Admin = mongoose.model('Admin');
 
 exports.User = mongoose.model('User');
 exports.WeappUser = mongoose.model('WeappUser');
@@ -48,6 +49,9 @@ exports.Account = mongoose.model('Account');
 exports.Token = mongoose.model('Token');
 exports.Email = mongoose.model('Email');
 exports.Phone = mongoose.model('Phone');
+exports.Order = mongoose.model('Order');
 
 exports.House = mongoose.model('House');
 exports.Bedroom = mongoose.model('Bedroom');
+exports.Photo = mongoose.model('Photo');
+exports.Comment = mongoose.model('Comment');

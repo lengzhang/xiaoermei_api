@@ -7,6 +7,10 @@ exports.Schema = `
     create_at: String
   }
 
+  type token {
+    access_token: String
+    role: String
+  }
 `
 /*
   type tokenResult {
@@ -15,13 +19,13 @@ exports.Schema = `
   }
   */
 exports.Query = `
-  getAccount(_id: String!): _account
+  getAccount(_id: ID!): _account
   getAccounts: [_account]!
-  signIn(username: String, password: String): String
+  signIn(username: String, password: String): token!
 `
 
 exports.Mutation = `
-  signUp(username: String!, password: String!, nickname: String!, role: String!, avatar: String, gender: Int, brief: String, country: String, province: String, city: String): Boolean!
+  signUp(username: String!, password: String!, nickname: String!, role: String!, avatar: String, gender: Int, brief: String, country: String, province: String, city: String): _result!
 
-  updatePassword(password: String!, oldPassword: String!): Boolean!
+  updatePassword(password: String!, oldPassword: String!): _result!
 `

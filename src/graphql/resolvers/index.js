@@ -1,53 +1,32 @@
-import TestOne from './test-one';
-import TestTwo from './test-two';
-import Test from './test';
+
+import Admin from './admin';
 
 import User from './user';
 import WeappUser from './weapp-user';
 import Account from './account';
+import Order from './order';
 
 import House from './house';
+import Bedroom from './bedroom';
+import Photo from './photo';
+import Comment from './comment';
 
-let Query = {}
-Object.assign(Query, TestOne.query)
-Object.assign(Query, TestTwo.query)
-Object.assign(Query, Test.query)
+const items = [Admin, User, WeappUser, Account, Order, House, Bedroom, Photo, Comment];
 
-Object.assign(Query, User.query)
-Object.assign(Query, WeappUser.query)
-Object.assign(Query, Account.query)
+let Resolvers = {}, Query = {}, Mutation = {};
 
-Object.assign(Query, House.query)
+items.map(async (item) => {
+  if (item.resolvers) Object.assign(Resolvers, item.resolvers)
+  if (item.query) Object.assign(Query, item.query)
+  if (item.mutation) Object.assign(Mutation, item.mutation)
+})
 
-let Mutation = {}
-Object.assign(Mutation, TestOne.mutation)
-Object.assign(Mutation, TestTwo.mutation)
-Object.assign(Mutation, Test.mutation)
-
-Object.assign(Mutation, User.mutation)
-Object.assign(Mutation, WeappUser.mutation)
-Object.assign(Mutation, Account.mutation)
-
-Object.assign(Mutation, House.mutation)
-
-const Resolvers = {
-  Query,
-  Mutation
-}
+Resolvers.Query = Query;
+Resolvers.Mutation = Mutation;
 
 Resolvers._result = {
   success: ({success}) => success,
   message: ({message}) => message,
 }
-
-Object.assign(Resolvers, TestOne.resolvers);
-Object.assign(Resolvers, TestTwo.resolvers);
-Object.assign(Resolvers, Test.resolvers)
-
-Object.assign(Resolvers, User.resolvers)
-Object.assign(Resolvers, WeappUser.resolvers)
-Object.assign(Resolvers, Account.resolvers)
-
-Object.assign(Resolvers, House.resolvers)
 
 export default Resolvers;

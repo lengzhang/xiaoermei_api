@@ -1,4 +1,5 @@
-import { House, User, Bedroom } from '../../mongo/models';
+import { House, User, Bedroom, Photo } from '../../mongo/models';
+import { verifyUser, verifyOwner, verifyHouse} from '../../global/verify';
 let [ query, mutation, resolvers ] =[{}, {}, {}];
 import {createError} from '../errors';
 
@@ -10,6 +11,7 @@ resolvers._house = {
   rental_type: ({rental_type}) => rental_type,
   guest_only: ({guest_only}) => guest_only,
   price: ({price}) => price,
+  deposit_rate: ({deposit_rate}) => deposit_rate,
   address: ({address}) => address,
   bedrooms: ({bedrooms}) => bedrooms.map(async (bedroom) => await Bedroom.findOne({query: {_id: bedroom}})),
   bedrooms_count: ({bedrooms_count}) => bedrooms_count,
@@ -17,6 +19,8 @@ resolvers._house = {
   safe_facilities: ({safe_facilities}) => safe_facilities,
   rule: ({rule}) => rule,
   acknowledge: ({acknowledge}) => acknowledge,
+  cover: async ({cover}) => await Photo.findOne({query: {_id: cover}}),
+  photos: ({photos}) => photos.map(async (photo) => await Photo.findOne({query: {_id: photo}})),
   brief: ({brief}) => brief,
   comment: ({comment}) => comment,
   comment_count: ({comment_count}) => comment_count,
@@ -125,7 +129,7 @@ resolvers._house_acknowledge = {
 
 // Query
 query.getHouse = async (root, {_id}, context, info) => {
-  return await House.findOne({query: {_id}});
+  return await House.findOne({query: args});
 }
 
 query.getHouses = async (root, args, context, schema) => {
@@ -133,165 +137,52 @@ query.getHouses = async (root, args, context, schema) => {
 }
 
 // Mutation
-// const verifyUser = async ({userId, ownerId}) => {
-//   // Check access token
-//   if (!userId) throw createError({message: 'Access token is required'});
-//   // Check user role
-//   return await User.findOne({query: {_id: userId}, select: {'_id': 1, 'role': 1}})
-//   .then(async (userInfo) => {
-//     // console.log("userInfo", userInfo);
-//     if (userInfo.role === 'customer') throw createError({message: 'user role cannot be customer'});
-//     else if (userInfo.role === 'admin' && !ownerId) throw createError({message: 'owner id is required'});
-//     else if (userInfo.role === 'landlord') ownerId = userId;
-//
-//     // Verify owner
-//     return await User.findOne({query: {_id: ownerId}, select: {'_id': 1, 'role': 1}})
-//     .then((ownerInfo) => {
-//       // console.log("ownerInfo",ownerInfo);
-//       if (!ownerInfo || ownerInfo.role != 'landlord') throw createError({message: 'owner verification fail'});
-//       return ownerInfo;
-//     })
-//   })
-// }
-const verifyUser = async ({userId}) => {
-  // Check access token
-  if (!userId) throw createError({message: 'Access token is required'});
-  // Check user role
-  return await User.findOne({query: {_id: userId}, select: {'_id': 1, 'role': 1}})
-  .then(async (userInfo) => {
-    // console.log("userInfo", userInfo);
-    if (userInfo.role === 'customer') throw createError({message: 'user role cannot be customer'});
-    return userInfo;
-  })
-}
-
-const verifyOwner = async ({userId, ownerId}) => {
-  let userInfo = await verifyUser({userId});
-  // Check user role
-  if (userInfo.role === 'admin' && !ownerId) throw createError({message: 'owner id is required'});
-  else if (userInfo.role === 'landlord') ownerId = userId;
-
-  // Verify owner
-  return await User.findOne({query: {_id: ownerId}, select: {'_id': 1, 'role': 1}})
-  .then((ownerInfo) => {
-    // console.log("ownerInfo",ownerInfo);
-    if (!ownerInfo || ownerInfo.role != 'landlord') throw createError({message: 'owner verification fail'});
-    return ownerInfo;
-  })
-}
-
+// House
 mutation.addHouse = async (root, args, context, schema) => {
   // Verify User
+  let user = await verifyUser({userId: context.user, customer: false, landlord: true, admin: true});
+  // Verify Owner
   let owner = await verifyOwner({userId: context.user, ownerId: args.owner});
   // Create new house record
-  // console.log("owner", owner);
   args.owner = owner._id;
-  // console.log("args", args);
   await House.save({data: args});
-  return true;
-}
-
-mutation.addBedroom = async (root, args, context, schema) => {
-  // console.log("args", args);
-  // console.log("context", context);
-  // Verify User
-  let userId = context.user
-  let owner = await verifyOwner({userId: context.user, ownerId: args.owner});
-  // Verify House
-  let houseId = args.house;
-  await House.findOne({query: {_id: houseId}, select: {'_id': 1, 'owner': 1, 'deleted': 1}})
-  .then((houseInfo) => {
-    // console.log('houseInfo', houseInfo);
-    if (!houseInfo) throw createError({message: 'house does not exist'});
-    else if (owner.role === 'landlord' && owner._id.toString() != houseInfo.owner.toString()) throw createError({message: 'You do not have permission'});
-    else if (houseInfo.deleted) throw createError({message: 'House already been deleted'});
-  })
-
-  delete args.owner;
-  delete args.house;
-  // Calculate total number of beds in the room
-  args.total = 0;
-  for (let v in args) {
-    // console.log(`[${v}]\t`, args[`${v}`]);
-    args.total += args[`${v}`];
-  }
-  args.house = houseId;
-
-  // Create new bedroom record
-  return await Bedroom.save({data: args})
-  .then(async (doc) => {
-    return await House.updateOne({
-      query: {_id: houseId},
-      update: { $push: { bedrooms: doc._id } },
-      options: {runValidators: true}})
-    .then((res) => {
-      return true;
-    })
-  })
-}
-
-mutation.updateBedroom = async (root, args, context, schema) => {
-  // Verify User
-  let userInfo = await verifyUser({userId: context.user});
-  // Verify Bedroom
-  let { _id } = args;
-  return await Bedroom.findOne({query: {_id}, select: {'_id': 1, 'house': 1}})
-  .then(async (bedroomInfo) => {
-    if (!bedroomInfo) return {success: false, message: 'bedroom does not exist'};
-    // Verify House
-    return await House.findOne({query: {_id: bedroomInfo.house}, select: {'_id': 1, 'owner': 1, 'deleted': 1, 'bedrooms': 1}})
-    .then(async (houseInfo) => {
-      console.log('houseInfo', houseInfo);
-      if (!houseInfo) return {success: false, message: 'house does not exist'};
-      else if (userInfo.role === 'landlord' && userInfo._id != houseInfo.owner) return {success: false, message: 'You do not have permission'};
-      else if (houseInfo.deleted) return {success: false, message: 'House already been deleted'};
-    })
-  })
+  return {success: true};
 }
 
 mutation.deleteHouse = async (root, args, context, schema) => {
-  // console.log("root", root);
-  console.log("args", args);
-  console.log("context", context);
   // Verify User
-  let userInfo = await verifyUser({userId: context.user});
-
+  let user = await verifyUser({userId: context.user, customer: false, landlord: true, admin: true});
   // Processing delete house
-  return args._id.map(async (houseId) => {
+  return args.ids.map(async (houseId) => {
     // Verify House
-    return await House.findOne({query: {_id: houseId}, select: {'_id': 1, 'owner': 1, 'deleted': 1}})
-    .then(async (houseInfo) => {
-      console.log('houseInfo', houseInfo);
-      if (!houseInfo) return {success: false, message: 'house does not exist'};
-      else if (userInfo.role === 'landlord' && userInfo._id != houseInfo.owner) return {success: false, message: 'You do not have permission'};
-      else if (houseInfo.deleted) return {success: false, message: 'House already been deleted'};
-
-      // Mark the house as deleted
-      return await House.updateOne({query: {_id: houseInfo._id}, update: {deleted: true}, options: {runValidators: true}})
-      .then((res) => {
-        console.log(res);
-        return {success: true, message: 'House deleted'};
-      })
+    let house;
+    try {
+      house = await verifyHouse({userId: user._id, houseId});
+    }
+    catch({message}) {
+      return {success: false, message};
+    }
+    // Mark the house as deleted
+    return await House.updateOne({query: {_id: houseId}, update: {deleted: true}, options: {runValidators: true}})
+    .then((res) => {
+      return {success: true, message: 'House deleted'};
     })
   })
 }
 
-mutation.removeHouse = async (root, args, context, schema) => {
+mutation.removeHouses = async (root, args, context, schema) => {
   // Verify User
-  let userInfo = await verifyUser({userId: context.user});
-
+  let user = await verifyUser({userId: context.user, customer: false, landlord: false, admin: true});
   // Processing remove house
-  return args._id.map(async (houseId) => {
+  return args.ids.map(async (houseId) => {
     // Verify House
-    return await House.findOne({query: {_id: houseId}, select: {'_id': 1, 'owner': 1, 'bedrooms': 1, 'deleted': 1}}).then(async (houseInfo) => {
-      console.log('houseInfo', houseInfo);
-      if (!houseInfo) return {success: false, message: 'house does not exist'};
+    return await House.findOne({query: {_id: houseId}, select: {'_id': 1, 'owner': 1, 'bedrooms': 1, 'deleted': 1}}).then(async (house) => {
+      if (!house) return {success: false, message: 'house does not exist'};
       // Remove the house
       return await House.deleteOne({query: {_id: houseId}})
       .then(async (res) => {
         // Remove bedrooms
-        houseInfo.bedrooms.map(async(bedroom) => {
-          console.log(bedroom);
+        house.bedrooms.map(async(bedroom) => {
           await Bedroom.deleteOne({query: {_id: bedroom}});
         })
         return {success: true, message: 'House removed'};
@@ -300,59 +191,15 @@ mutation.removeHouse = async (root, args, context, schema) => {
   })
 }
 
-mutation.removeBedroom = async (root, args, context, schema) => {
-  // Verify User
-  let userInfo = await verifyUser({userId: context.user});
-  // Processing delete bedroom
-  return args._id.map(async (_id) => {
-    // Verify Bedroom
-    return await Bedroom.findOne({query: {_id}, select: {'_id': 1, 'house': 1}})
-    .then(async (bedroomInfo) => {
-      if (!bedroomInfo) return {success: false, message: 'bedroom does not exist'};
-      // Verify House
-      return await House.findOne({query: {_id: bedroomInfo.house}, select: {'_id': 1, 'owner': 1, 'deleted': 1, 'bedrooms': 1}})
-      .then(async (houseInfo) => {
-        console.log('houseInfo', houseInfo);
-        if (!houseInfo) return {success: false, message: 'house does not exist'};
-        else if (userInfo.role === 'landlord' && userInfo._id != houseInfo.owner) return {success: false, message: 'You do not have permission'};
-        else if (houseInfo.deleted) return {success: false, message: 'House already been deleted'};
-
-        // Remove Bedroom Record
-        return await Bedroom.deleteOne({query: {_id: bedroomInfo._id}})
-        .then(async (res) => {
-          console.log(res);
-          return await House.updateOne({
-            query: {_id: houseInfo._id},
-            update: {$pull: {bedrooms: bedroomInfo._id}}
-          })
-          .then((res) => {
-            console.log(res);
-            return {success: true};
-          })
-        })
-      })
-    })
-  })
-}
-
 const houseUpdate = async ({userId, houseId, update}) => {
   // Verify User
-  let userInfo = await verifyUser({userId});
-  console.log("userInfo", userInfo);
+  let user = await verifyUser({userId, customer: false, landlord: true, admin: true});
   // Verify House
-  await House.findOne({query: {_id: houseId}, select: {'_id': 1, 'owner': 1, 'deleted': 1}})
-  .then((houseInfo) => {
-    console.log('houseInfo', houseInfo);
-    if (!houseInfo) throw createError({message: 'house does not exist'});
-    else if (userInfo.role === 'landlord' && userInfo._id.toString() != houseInfo.owner.toString()) throw createError({message: 'You do not have permission'});
-    else if (houseInfo.deleted) throw createError({message: 'House already been deleted'});
-  })
-
+  await verifyHouse({userId: user._id, houseId});
   // Update the house
   return await House.updateOne({query: {_id: houseId}, update, options: {runValidators: true}})
   .then((res) => {
-    console.log(res);
-    return true;
+    return {success: true};
   })
 }
 
@@ -374,7 +221,7 @@ mutation.updateHouseAddress = async (root, args, context, schema) => {
   return await houseUpdate({
     userId: context.user,
     houseId: _id,
-    update: args
+    update: {address: args}
   })
 }
 
@@ -385,7 +232,7 @@ mutation.updateHouseAmenities = async (root, args, context, schema) => {
   return await houseUpdate({
     userId: context.user,
     houseId: _id,
-    update: args
+    update: {amenities: args}
   })
 }
 
@@ -396,18 +243,18 @@ mutation.updateHouseSafeFacilities = async (root, args, context, schema) => {
   return await houseUpdate({
     userId: context.user,
     houseId: _id,
-    update: args
+    update: {safe_facilities: args}
   })
 }
 
-mutation.updateHouseSafeFacilities = async (root, args, context, schema) => {
+mutation.updateHouseRule = async (root, args, context, schema) => {
   // Update the house
   let { _id } = args;
   delete args._id;
   return await houseUpdate({
     userId: context.user,
     houseId: _id,
-    update: args
+    update: {rule: args}
   })
 }
 
@@ -418,7 +265,7 @@ mutation.updateHouseAcknowledge = async (root, args, context, schema) => {
   return await houseUpdate({
     userId: context.user,
     houseId: _id,
-    update: args
+    update: {acknowledge: args}
   })
 }
 

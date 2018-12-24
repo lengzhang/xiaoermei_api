@@ -11,6 +11,17 @@ const config = {
   jwt_secret: 'jwt_secret_xiao_er_mei',
   jwt_expires: 60 * 5,
   seed_length: 10,
+
+  // Amazon Web Server
+  Auth: {
+    identityPoolId: 'us-west-2:2dfce268-7fc5-4913-b0c2-e44a66de47d7', //REQUIRED - Amazon Cognito Identity Pool ID
+    region: 'us-west-2', // REQUIRED - Amazon Cognito Region
+  },
+  Storage: {
+    bucket: 'xiaoermei-test', //REQUIRED -  Amazon S3 bucket
+    region: 'us-west-2', //OPTIONAL -  Amazon service region
+  },
+  aws_s3_url: 'https://s3-us-west-2.amazonaws.com/admin6ecfcb90292a425194cf21dad8473aaf/public/'
 }
 
 module.exports = config;

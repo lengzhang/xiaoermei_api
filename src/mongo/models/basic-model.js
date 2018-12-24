@@ -102,6 +102,30 @@ class BasicModel {
     if (!collections) throw 'collections is null';
     return await this.schema.populate(collections, options);
   }
+
+  // Find ID and Action
+  async findByIdAndUpdate({id, update, options = {}}) {
+    if (!id) throw 'id is null';
+    if (!update) throw 'update is null';
+    return await this.schema.findByIdAndUpdate(id, update, options);
+  }
+
+  async findByIdAndDelete({id, options = {}}) {
+    if (!id) throw 'id is null';
+    return await this.schema.findByIdAndDelete(id, options);
+  }
+
+  // Find One and Action
+  async findOneAndUpdate({query, update, options = {}}) {
+    if (!query) throw 'query is null';
+    if (!update) throw 'update is null';
+    return await this.schema.findOneAndUpdate(query, update, options);
+  }
+
+  async findOneAndDelete({query, options = {}}) {
+    if (!query) throw 'query is null';
+    return await this.schema.findOneAndDelete(query, options);
+  }
 }
 
 export default BasicModel;
