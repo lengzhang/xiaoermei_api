@@ -128,7 +128,7 @@ resolvers._house_acknowledge = {
 }
 
 // Query
-query.getHouse = async (root, {_id}, context, info) => {
+query.getHouse = async (root, args, context, info) => {
   return await House.findOne({query: args});
 }
 
