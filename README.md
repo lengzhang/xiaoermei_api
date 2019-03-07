@@ -4,7 +4,7 @@
 
 1. Install `Node.js` [required]
 
-2. Setup mongoDB, install `mongoDB` in your server or setup `mongoDB Atlas` [mongodb.com](mongodb.com)
+2. Setup mongoDB, install `mongoDB` in your server or setup `mongoDB Atlas` at [mongodb.com](mongodb.com)
 
 3. Replace `db_url` in `config/index.js` by your MongoDB connection string
 
