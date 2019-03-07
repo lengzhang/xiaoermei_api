@@ -1,14 +1,13 @@
 import { House, Photo } from '../../mongo/models';
 import { verifyUser, verifyOwner, verifyHouse, checkHouse} from '../../global/verify';
 let [ query, mutation, resolvers ] =[{}, {}, {}];
-import config from '../../../config';
 import {createError} from '../errors';
 
 resolvers._photo = {
   _id: ({_id}) => _id.toString(),
   house: ({house}) => house.toString(),
   key: ({key}) => key,
-  url: ({key}) => `${config.aws_s3_url}${key}`,
+  url: ({key}) => key,
   create_at: ({create_at}) => create_at,
 }
 

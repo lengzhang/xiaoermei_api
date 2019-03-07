@@ -21,7 +21,6 @@ const config = {
     bucket: 'xiaoermei-test', //REQUIRED -  Amazon S3 bucket
     region: 'us-west-2', //OPTIONAL -  Amazon service region
   },
-  aws_s3_url: 'https://s3-us-west-2.amazonaws.com/admin6ecfcb90292a425194cf21dad8473aaf/public/'
 }
 
 module.exports = config;
